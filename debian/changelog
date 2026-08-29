@@ -1,0 +1,113 @@
+potion (0.1.1) unstable; urgency=medium
+
+  * Removed the external libabz and libdebug dependencies. libdebug's
+    logging is now a small stderr/syslog shim in src/log.[ch] and its
+    memory leak tracker is gone, potion using malloc(3) directly. The
+    two libabz macros potion needed are in src/util.h.
+  * libabz's intrusive list was deliberately not carried over: despite
+    its BSD notice it is verbatim Linux 2.4 include/linux/list.h, which
+    is GPL-2.0, together with Simon Tatham's MIT list sort stripped of
+    its copyright notice. Vendoring it would have made this package's
+    licensing statement untrue. src/flow.c now uses the BSD
+    <sys/queue.h> macros from libc and qsort(3) instead, so potion
+    contains no third-party code at all.
+  * Security: the IPv4 parser was handed the pre-decapsulation capture
+    length, so every bounds check was short by the link-layer header and
+    a crafted or truncated frame could be read up to 16 bytes past the
+    captured data, with the stray bytes rendered as addresses and ports.
+  * Security: an IPv4 header length below the fixed 20 bytes (including
+    zero) passed the length check and was then used as an offset.
+  * Security: headers are copied out of the capture buffer instead of
+    being accessed through casts, which has no alignment guarantees.
+  * Security: privileges are dropped once the capture handle is open,
+    so the full-screen session no longer runs as root when potion was
+    started through sudo or from a set-user-ID binary.
+  * When the flow table filled up the newest flow was evicted instead of
+    the oldest, so no new flow ever survived. Eviction is now least
+    recently used.
+  * A datagram whose first fragment arrived before its later fragments
+    created a second, permanently incomplete flow. Fragment matching is
+    now driven by a separate FLOW_PARTIAL flag.
+  * The average bitrate was computed by dividing by the flow age, which
+    is zero for any flow created in the current second.
+  * Fixed an out-of-bounds read of the rate suffix table, a format
+    string with more conversions than arguments in the syslog facility
+    diagnostic, an unchecked localtime(3) result, and several width
+    checks defeated by signed/unsigned conversion on narrow terminals.
+  * pcap_dispatch() is given a packet budget so a busy interface can no
+    longer starve the display, the timers and signal delivery, and a
+    capture error now shuts potion down instead of leaving it spinning
+    on a frozen screen.
+  * The terminal is restored on SIGSEGV, SIGBUS, SIGFPE, SIGILL and
+    SIGABRT by replaying the terminfo teardown strings and the saved
+    line discipline, using only async-signal-safe calls. Resizes are
+    handled, and signal dispositions are saved and restored with
+    sigaction(2) rather than forced to SIG_DFL.
+  * A terminal that hangs up while potion is running is detected rather
+    than spun on, and the key handler has a budget like the capture.
+  * Refuse to start unless stdin and stdout are terminals, and report
+    when the terminal is too small to lay out rather than drawing
+    outside it.
+  * 802.1Q and 802.1ad tagged frames are decoded rather than dropped.
+  * --snaplen is range checked, -h/--help prints to stdout and exits
+    successfully, --flows accepts its own default, and new --version and
+    --no-promisc options were added.
+  * Replaced the recursive make framework with a single Makefile that
+    honours CC, CFLAGS, CPPFLAGS and LDFLAGS from the environment, finds
+    its libraries with pkg-config, and no longer strips the binary
+    itself or forces -Os over the packaging flags.
+  * Modernised the packaging: debhelper compat 13 via build dependency,
+    the dh sequencer, hardening build flags, a machine-readable
+    copyright file, and a test run that is skipped when cross building.
+  * Added a test suite covering the packet parser and the flow table,
+    run at build time.
+  * The flow a first fragment merged into kept the datagram id of
+    whichever datagram created it, so every fragmented datagram after
+    the first on a five-tuple stranded its own later fragments in a
+    partial flow that nothing could complete.
+  * Packets are no longer parsed past the end of the IP datagram, and
+    the wire length is preferred over the length the sender advertises
+    wherever the two can differ for reasons other than link padding.
+  * The count of packets dropped or not understood is displayed rather
+    than only counted.
+  * Corrected the man page, which documented a log file option that does
+    not exist and the wrong defaults for --flows and --inactive.
+  * This release supersedes the unreleased 0.0.6.
+
+ -- Abraham van der Merwe <abz@frogfoot.com>  Sat, 29 Aug 2026 23:35:13 +0200
+
+potion (0.0.5) unstable; urgency=low
+
+  * Removed list.c reference in Makefile.
+  * Applied ncurses line drawing character patch.
+  * Updated debian dependencies.
+
+ -- Abraham vd Merwe <abz@debian.org>  Mon, 30 Apr 2012 09:43:40 +0200
+
+potion (0.0.4) unstable; urgency=low
+
+  * Added syslog explanation and paragraph about network interface
+    privileges to man page (Closes: #275604)
+  * Linked against latest libevent library (Closes: #293403)
+
+ -- Abraham vd Merwe <abz@debian.org>  Wed,  9 Feb 2005 18:26:27 +0200
+
+potion (0.0.3) unstable; urgency=low
+
+  * Depend on latest libabz0-dev package (Closes: #262963)
+  * Compile with -O0 instead of -Os on sparc64 (Closes: #262784)
+  * Use syslog for logging
+
+ -- Abraham vd Merwe <abz@debian.org>  Sun, 22 Aug 2004 15:16:45 +0200
+
+potion (0.0.2) unstable; urgency=low
+
+  * Display top flows sorted by average bitrate, not size.
+
+ -- Abraham vd Merwe <abz@debian.org>  Mon, 19 Jul 2004 11:55:36 +0200
+
+potion (0.0.1) unstable; urgency=low
+
+  * Initial release.
+
+ -- Abraham vd Merwe <abz@debian.org>  Tue,  6 Jul 2004 19:56:52 +0200

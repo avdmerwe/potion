@@ -1,0 +1,146 @@
+.\" SPDX-License-Identifier: BSD-3-Clause
+.\" Copyright (c) 2004-2026 Abraham van der Merwe <abz@frogfoot.com>
+.\"
+.TH POTION 1 "August 2026" "potion 0.1.1" "User Commands"
+.SH NAME
+potion \- IP flow monitor
+.SH SYNOPSIS
+.B potion
+.RI [ options ]
+.I interface
+.RI [ expression ]
+.SH DESCRIPTION
+.B potion
+listens on a network interface using libpcap, aggregates the traffic it
+sees into flows, and displays the busiest of them with their average
+throughput, as many as fit on the screen. The display refreshes once a
+second and is sorted by rate, highest first.
+.PP
+A flow is identified by the IP protocol, the type of service field, the
+source and destination addresses, and the source and destination ports.
+Only IPv4 is decoded; everything else is ignored.
+.PP
+Fragmented datagrams are marked
+.B [frag]
+in the protocol column. Only the first fragment of a datagram carries the
+port numbers, so fragments that arrive before it are accumulated against
+the datagram identification and folded into the real flow once the first
+fragment shows up.
+.PP
+A flow is forgotten when it has not been updated for the inactive
+timeout, when it has existed for longer than the active timeout, or when
+a TCP segment carrying a reset, or both FIN and ACK, is seen for it.
+When the table is full, the flow that has gone longest without an update
+is recycled.
+.SH OPTIONS
+.TP
+.BR \-s " " \fIbytes\fR ", " \-\-snaplen = \fIbytes\fR
+Capture
+.I bytes
+of data from each packet rather than the default of 128, which is more
+than enough for IP, ICMP, TCP and UDP headers. Accepted values are 68 to
+262144, or 0 to capture whole packets. Larger snapshots take longer to
+process and reduce the effective amount of packet buffering, which may
+cause packets to be lost.
+.TP
+.BR \-f " " \fIn\fR ", " \-\-flows = \fIn\fR
+The maximum number of flows to track, 16 to 1048576. When this limit is
+reached the least recently updated flow is recycled to make room for a
+new one. The default is 64.
+.TP
+.BR \-a " " \fIminutes\fR ", " \-\-active = \fIminutes\fR
+Active flow lifetime, 1 to 60 minutes. A flow is forgotten once it has
+existed this long, however busy it is. The default is 30 minutes.
+.TP
+.BR \-i " " \fIseconds\fR ", " \-\-inactive = \fIseconds\fR
+Idle flow lifetime, 10 to 600 seconds. A flow is forgotten once it has
+gone this long without a packet. The default is 30 seconds.
+.TP
+.BR \-S " " \fIfacility\fR ", " \-\-syslog = \fIfacility\fR
+Syslog facility to log to. The default is
+.BR user .
+One of
+.BR authpriv ,
+.BR cron ,
+.BR daemon ,
+.BR ftp ,
+.BR kern ,
+.BR lpr ,
+.BR mail ,
+.BR news ,
+.BR syslog ,
+.BR user ,
+.BR uucp ,
+or
+.BR local0
+through
+.BR local7 .
+.TP
+.BR \-P ", " \-\-no\-promisc
+Do not put the interface into promiscuous mode. Only traffic to and from
+this host, plus broadcast and multicast, is then seen.
+.TP
+.BR \-V ", " \-\-version
+Print the version and exit.
+.TP
+.BR \-h ", " \-\-help
+Print a summary of the options and exit.
+.TP
+.I interface
+Listen on this interface. An interface argument of
+.B any
+captures from all interfaces; captures on
+.B any
+are never done in promiscuous mode.
+.TP
+.I expression
+A pcap filter expression selecting which packets are captured. If no
+expression is given all packets are captured. Since
+.B potion
+drops everything that is not IPv4, passing at least
+.B ip
+is worthwhile. See
+.BR pcap-filter (7)
+for the syntax.
+.SH DISPLAY
+The display needs a terminal of at least 72 by 10 characters; below that
+.B potion
+says so and draws nothing else. The status line shows the number of
+flows currently tracked and, if any, the number of packets that were
+dropped or could not be decoded.
+.SH "INTERACTIVE COMMANDS"
+.TP
+.B h
+or
+.B ?
+Show the built-in help screen. Any key returns to the flow display.
+.TP
+.B ^L
+Redraw the screen.
+.TP
+.B q
+Quit.
+.SH PRIVILEGES
+Reading packets from a network interface requires privileges, so
+.B potion
+is normally started through
+.BR sudo (8).
+Once the capture handle is open and the filter is compiled it needs none
+of them, so it drops back to the invoking user for the rest of the
+session. Started from a genuine root login there is no unprivileged
+identity to return to and it stays as it is.
+.SH DIAGNOSTICS
+The terminal belongs to the display, so once it is up
+.B potion
+reports errors to syslog rather than to the screen. If it appears to be
+doing nothing, or exits immediately, check the log.
+.SH "EXIT STATUS"
+.B potion
+exits 0 when it was asked to quit, and non-zero when the arguments were
+invalid, the interface could not be opened, or capturing failed.
+.SH "SEE ALSO"
+.BR tcpdump (1),
+.BR pcap (3pcap),
+.BR pcap-filter (7)
+.SH AUTHOR
+Abraham van der Merwe <abz@frogfoot.com>

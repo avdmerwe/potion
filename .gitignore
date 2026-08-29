@@ -1,0 +1,22 @@
+# build output
+/potion
+*.o
+*.d
+/tests/test_capture
+/tests/test_flow
+
+# debian packaging output
+/debian/potion/
+/debian/files
+/debian/*.debhelper
+/debian/*.debhelper.log
+/debian/*.substvars
+/debian/debhelper-build-stamp
+/debian/.debhelper/
+
+# editor and OS noise
+*~
+.#*
+\#*#
+*.swp
+.DS_Store

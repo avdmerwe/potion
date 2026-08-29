@@ -1,0 +1,33 @@
+Source: potion
+Section: net
+Priority: optional
+Maintainer: Abraham van der Merwe <abz@frogfoot.com>
+Build-Depends: debhelper-compat (= 13),
+               libevent-dev,
+               libncurses-dev,
+               libpcap-dev,
+               pkg-config
+Standards-Version: 4.6.0
+Rules-Requires-Root: no
+Homepage: https://github.com/avdmerwe/potion
+Vcs-Browser: https://github.com/avdmerwe/potion
+Vcs-Git: https://github.com/avdmerwe/potion.git
+
+Package: potion
+Architecture: any
+Depends: ${misc:Depends},
+         ${shlibs:Depends}
+Description: IP flow monitor
+ Potion is a console utility that listens on a network interface using
+ libpcap, aggregates the traffic it sees into flows, and displays the
+ busiest of them with their average throughput, as many as fit on the
+ screen. The display refreshes once a second and is sorted by rate.
+ .
+ A flow is identified by the IP protocol, the type of service field, the
+ source and destination addresses, and the source and destination ports.
+ Fragmented datagrams are reassembled into the flow they belong to once
+ the fragment carrying the port numbers has been seen.
+ .
+ Capturing needs privileges, so potion is normally started through sudo.
+ It gives them up as soon as the capture handle is open, and runs the
+ rest of the session as the invoking user.

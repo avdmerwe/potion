@@ -1,0 +1,18 @@
+#!/usr/bin/make -f
+# SPDX-License-Identifier: BSD-3-Clause
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+include /usr/share/dpkg/architecture.mk
+
+%:
+	dh $@
+
+override_dh_auto_install:
+	dh_auto_install -- prefix=/usr
+
+# the test suite runs the binaries it builds, so it cannot run cross
+override_dh_auto_test:
+ifeq ($(DEB_BUILD_GNU_TYPE),$(DEB_HOST_GNU_TYPE))
+	dh_auto_test
+endif
